@@ -4,12 +4,15 @@ import os
 import argparse
 import time
 
+from sundry import get_file_sha256
+
 
 class Compare(Enum):
     equal = auto()  # files are the same
     nonexistent = auto()  # doesn't exist
     different_sizes = auto()  # different sizes
     different_mtimes = auto()  # different mtimes
+    different_hashes = auto()  # difference hashes
 
 
 def log_differences(log_string, init_file=False):
@@ -21,26 +24,48 @@ def log_differences(log_string, init_file=False):
         f.write('\n')
 
 
-def _file_compare(path_a: str, path_b: str, ignore_mtime: bool):
+def _file_compare(source_path: str, destination_path: str, ignore_mtime: bool, use_hash: bool):
     comparison = Compare.equal
-    if not os.path.exists(path_a):
+
+    if ignore_mtime:
+        time_diff = None
+    else:
+        try:
+            time_diff = abs(os.path.getmtime(source_path) - os.path.getmtime(destination_path))
+        except FileNotFoundError:
+            time_diff = None
+
+    if use_hash:
+        try:
+            source_hash = get_file_sha256(source_path)
+        except FileNotFoundError:
+            source_hash = None
+        try:
+            destination_hash = get_file_sha256(destination_path)
+        except FileNotFoundError:
+            destination_hash = None
+    else:
+        source_hash = destination_hash = None
+
+    if not os.path.exists(source_path):
         comparison = Compare.nonexistent
-        log_differences(f'path does not exist : "{path_a}"')
-    elif not os.path.exists(path_b):
+        log_differences(f'source path does not exist : "{source_path}"')
+    elif not os.path.exists(destination_path):
         comparison = Compare.nonexistent
-        log_differences(f'path does not exist : "{path_b}"')
-    elif os.path.getsize(path_a) != os.path.getsize(path_b):
+        log_differences(f'destination path does not exist : "{destination_path}"')
+    elif os.path.getsize(source_path) != os.path.getsize(destination_path):
         comparison = Compare.different_sizes
-        log_differences(f'different sizes : "{path_a}"={os.path.getsize(path_a)} , "{path_b}"={os.path.getsize(path_b)}')
-    elif not ignore_mtime:
-        time_diff = abs(os.path.getmtime(path_a) - os.path.getmtime(path_b))
-        if time_diff > 3.0:
-            comparison = Compare.different_mtimes
-            log_differences(f'different mtimes : "{path_a}" , "{path_b}" (difference={time_diff})')
+        log_differences(f'different sizes : "{source_path}"={os.path.getsize(source_path)} , "{destination_path}"={os.path.getsize(destination_path)}')
+    elif time_diff is not None and time_diff > 3.0:
+        comparison = Compare.different_mtimes
+        log_differences(f'different mtimes : "{source_path}" , "{destination_path}" (difference={time_diff})')
+    elif destination_hash != source_hash:
+        comparison = Compare.different_hashes
+        log_differences(f'different hashes : "{source_path}:{source_hash}" , "{destination_path}:{destination_hash}"')
     return comparison
 
 
-def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool):
+def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool, quiet: bool, use_hash: bool):
 
     log_differences(f"source : {source_dir} ({os.path.abspath(source_dir)})", True)
     log_differences(f"destination : {destination_dir} ({os.path.abspath(destination_dir)})")
@@ -58,11 +83,11 @@ def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool):
             file_path_a = os.path.join(dir_path, file_name)
             sub_dir = file_path_a[len(source_dir) + 1:]
             file_path_b = os.path.join(destination_dir, sub_dir)
-            if _file_compare(file_path_a, file_path_b, ignore_mtime) is not Compare.equal:
+            if _file_compare(file_path_a, file_path_b, ignore_mtime, use_hash) is not Compare.equal:
                 miscompare_count += 1
 
             # print a dot every so often to show we're still alive
-            if compare_count % 2000 == 0 and time.time() - last_dot > 7.0:
+            if not quiet and compare_count % 2000 == 0 and time.time() - last_dot > 7.0:
                 print('.', end='', flush=True)
                 printed_a_dot = True
                 last_dot = time.time()
@@ -78,12 +103,15 @@ def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool):
 
 def main():
 
-    parser = argparse.ArgumentParser(description='Verify all files in the source directory are in destination directory.')
-    parser.add_argument('paths', nargs=2, help='paths (source, destination)')
+    parser = argparse.ArgumentParser(description='Verify all files in the source directory are in destination directory.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('path', nargs=2, help='paths (source, destination)')
     parser.add_argument('--ignore_mtime', action="store_true", default=False, help="ignore mtimes")
+    parser.add_argument('--quiet', action="store_true", default=False, help="turns off status during run (e.g. status dots)")
+    parser.add_argument('--use_hash', action="store_true", default=False, help="use hash for compares")
     args = parser.parse_args()
 
-    compare_dirs(args.paths[0], args.paths[1], args.ignore_mtime)
+    compare_dirs(args.path[0], args.path[1], args.ignore_mtime, args.quiet, args.use_hash)
 
 
 if __name__ == "__main__":
