@@ -62,8 +62,8 @@ def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool):
                 miscompare_count += 1
 
             # print a dot every so often to show we're still alive
-            if compare_count % 10000 == 0 and time.time() - last_dot > 10.0:
-                print('.', end='')
+            if compare_count % 2000 == 0 and time.time() - last_dot > 7.0:
+                print('.', end='', flush=True)
                 printed_a_dot = True
                 last_dot = time.time()
 
