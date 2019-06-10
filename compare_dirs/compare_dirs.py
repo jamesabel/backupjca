@@ -6,6 +6,8 @@ import time
 
 from sundry import get_file_sha256
 
+from compare_dirs import __version__
+
 
 class Compare(Enum):
     equal = auto()  # files are the same
@@ -106,8 +108,9 @@ def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool, quie
 
 def main():
 
-    parser = argparse.ArgumentParser(description='Verify all files in the source directory are in destination directory.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description=f'Verify all files in the source directory are in destination directory.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                     epilog=f'v{__version__}, www.abel.co, github.com/jamesabel/backupjca')
     parser.add_argument('path', nargs=2, help='paths (source, destination)')
     parser.add_argument('--ignore_mtime', action="store_true", default=False, help="ignore mtimes")
     parser.add_argument('--quiet', action="store_true", default=False, help="turns off status during run (e.g. status dots)")
