@@ -27,6 +27,12 @@ def log_differences(log_string, init_file=False):
 def _file_compare(source_path: str, destination_path: str, ignore_mtime: bool, use_hash: bool):
     comparison = Compare.equal
 
+    source_size = os.path.getsize(source_path)
+    try:
+        destination_size = os.path.getsize(destination_path)
+    except FileNotFoundError:
+        destination_size = None
+
     if ignore_mtime:
         time_diff = None
     else:
@@ -36,10 +42,7 @@ def _file_compare(source_path: str, destination_path: str, ignore_mtime: bool, u
             time_diff = None
 
     if use_hash:
-        try:
-            source_hash = get_file_sha256(source_path)
-        except FileNotFoundError:
-            source_hash = None
+        source_hash = get_file_sha256(source_path)
         try:
             destination_hash = get_file_sha256(destination_path)
         except FileNotFoundError:
@@ -47,13 +50,10 @@ def _file_compare(source_path: str, destination_path: str, ignore_mtime: bool, u
     else:
         source_hash = destination_hash = None
 
-    if not os.path.exists(source_path):
-        comparison = Compare.nonexistent
-        log_differences(f'source path does not exist : "{source_path}"')
-    elif not os.path.exists(destination_path):
+    if not os.path.exists(destination_path):
         comparison = Compare.nonexistent
         log_differences(f'destination path does not exist : "{destination_path}"')
-    elif os.path.getsize(source_path) != os.path.getsize(destination_path):
+    elif source_size != destination_size:
         comparison = Compare.different_sizes
         log_differences(f'different sizes : "{source_path}"={os.path.getsize(source_path)} , "{destination_path}"={os.path.getsize(destination_path)}')
     elif time_diff is not None and time_diff > 3.0:
@@ -62,7 +62,7 @@ def _file_compare(source_path: str, destination_path: str, ignore_mtime: bool, u
     elif destination_hash != source_hash:
         comparison = Compare.different_hashes
         log_differences(f'different hashes : "{source_path}:{source_hash}" , "{destination_path}:{destination_hash}"')
-    return comparison
+    return comparison, source_size
 
 
 def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool, quiet: bool, use_hash: bool):
@@ -76,6 +76,7 @@ def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool, quie
 
     compare_count = 0
     miscompare_count = 0
+    total_size = 0
     printed_a_dot = False
     for dir_path, _, file_names in os.walk(source_dir):
         for file_name in file_names:
@@ -83,7 +84,9 @@ def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool, quie
             file_path_a = os.path.join(dir_path, file_name)
             sub_dir = file_path_a[len(source_dir) + 1:]
             file_path_b = os.path.join(destination_dir, sub_dir)
-            if _file_compare(file_path_a, file_path_b, ignore_mtime, use_hash) is not Compare.equal:
+            comparison, size = _file_compare(file_path_a, file_path_b, ignore_mtime, use_hash)
+            total_size += size
+            if comparison is not Compare.equal:
                 miscompare_count += 1
 
             # print a dot every so often to show we're still alive
@@ -94,7 +97,7 @@ def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool, quie
 
     if printed_a_dot:
         print()
-    for s in [f"total compares : {compare_count}", f"miscompares : {miscompare_count}"]:
+    for s in [f"total size (bytes) : {total_size}", f"total compares : {compare_count}", f"miscompares : {miscompare_count}"]:
         print(s)
         log_differences(s)
 

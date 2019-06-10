@@ -1,4 +1,8 @@
 sundry
+#
+# install from source for now
+# pyinstaller
+#
 pytest
 coverage
 pytest-cov
