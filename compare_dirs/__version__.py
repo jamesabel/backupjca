@@ -1,5 +1,5 @@
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 __application_name__ = 'compare_dirs'
 __author__ = 'James Abel'
 __author_email__ = 'j@abel.co'

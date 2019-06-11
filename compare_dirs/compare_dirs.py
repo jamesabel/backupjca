@@ -13,6 +13,10 @@ from compare_dirs import __version__
 # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maxpath
 windows_long_path_prefix = "\\\\?\\"  # \\?\
 
+ignore_files = [".DS_Store",  # MacOS metadata file
+                "$Recycle.Bin"  # Windows recycle bin
+                ]
+
 
 class Compare(Enum):
     equal = auto()  # files are the same
@@ -85,7 +89,8 @@ def _file_compare(source_path: str, destination_path: str, ignore_mtime: bool, u
     return comparison, source_size
 
 
-def compare_dirs(orig_source_dir: str, orig_destination_dir: str, ignore_mtime: bool, quiet: bool, use_hash: bool, no_long_path: bool):
+def compare_dirs(orig_source_dir: str, orig_destination_dir: str, ignore_mtime: bool, quiet: bool, use_hash: bool,
+                 no_long_path: bool, no_ignore_files: bool):
 
     source_dir = to_long_path(orig_source_dir, no_long_path)
     destination_dir = to_long_path(orig_destination_dir, no_long_path)
@@ -105,14 +110,15 @@ def compare_dirs(orig_source_dir: str, orig_destination_dir: str, ignore_mtime: 
     printed_a_dot = False
     for dir_path, _, file_names in os.walk(source_dir):
         for file_name in file_names:
-            compare_count += 1
-            file_path_a = os.path.join(dir_path, file_name)
-            sub_dir = file_path_a[len(source_dir) + 1:]
-            file_path_b = os.path.join(destination_dir, sub_dir)
-            comparison, size = _file_compare(file_path_a, file_path_b, ignore_mtime, use_hash)
-            total_size += size
-            if comparison is not Compare.equal:
-                miscompare_count += 1
+            if no_ignore_files or file_name not in ignore_files:
+                compare_count += 1
+                file_path_a = os.path.join(dir_path, file_name)
+                sub_dir = file_path_a[len(source_dir) + 1:]
+                file_path_b = os.path.join(destination_dir, sub_dir)
+                comparison, size = _file_compare(file_path_a, file_path_b, ignore_mtime, use_hash)
+                total_size += size
+                if comparison is not Compare.equal:
+                    miscompare_count += 1
 
             # print a dot every so often to show we're still alive
             if not quiet and compare_count % 2000 == 0 and time.time() - last_dot > 7.0:
@@ -139,9 +145,10 @@ def main():
     parser.add_argument('--quiet', action="store_true", default=False, help="turns off status during run (e.g. status dots)")
     parser.add_argument('--use_hash', action="store_true", default=False, help="use hash for compares")
     parser.add_argument('--no_long_path', action="store_true", default=False, help="do not use long paths (affects Windows only)")
+    parser.add_argument('--no_ignore_files', action="store_true", default=False, help=f"do not ignore {ignore_files}")
     args = parser.parse_args()
 
-    compare_dirs(args.path[0], args.path[1], args.ignore_mtime, args.quiet, args.use_hash, args.no_long_path)
+    compare_dirs(args.path[0], args.path[1], args.ignore_mtime, args.quiet, args.use_hash, args.no_long_path, args.no_ignore_files)
 
 
 if __name__ == "__main__":
