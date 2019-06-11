@@ -2,7 +2,6 @@
 from enum import Enum, auto
 import os
 import argparse
-import time
 from functools import lru_cache
 import platform
 import time
@@ -10,6 +9,9 @@ import time
 from sundry import get_file_sha256, local_time_string, utc_time_string
 
 from compare_dirs import __version__
+
+# https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maxpath
+windows_long_path_prefix = "\\\\?\\"  # \\?\
 
 
 class Compare(Enum):
@@ -28,9 +30,7 @@ def is_windows():
 
 
 def to_long_path(path, no_long_path):
-    if not no_long_path and is_windows():
-        # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maxpath
-        windows_long_path_prefix = "\\\\?\\"  # \\?\
+    if not no_long_path and is_windows() and not path.startswith(windows_long_path_prefix):
         return windows_long_path_prefix + os.path.abspath(path)  # long path must be an absolute path
     return path
 
