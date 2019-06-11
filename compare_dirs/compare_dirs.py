@@ -3,8 +3,11 @@ from enum import Enum, auto
 import os
 import argparse
 import time
+from functools import lru_cache
+import platform
+import time
 
-from sundry import get_file_sha256
+from sundry import get_file_sha256, local_time_string, utc_time_string
 
 from compare_dirs import __version__
 
@@ -15,6 +18,21 @@ class Compare(Enum):
     different_sizes = auto()  # different sizes
     different_mtimes = auto()  # different mtimes
     different_hashes = auto()  # difference hashes
+
+
+@lru_cache()
+def is_windows():
+    if platform.system().lower()[0] == 'w':
+        return True
+    return False
+
+
+def to_long_path(path, no_long_path):
+    if not no_long_path and is_windows():
+        # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maxpath
+        windows_long_path_prefix = "\\\\?\\"  # \\?\
+        return windows_long_path_prefix + os.path.abspath(path)  # long path must be an absolute path
+    return path
 
 
 def log_differences(log_string, init_file=False):
@@ -67,10 +85,15 @@ def _file_compare(source_path: str, destination_path: str, ignore_mtime: bool, u
     return comparison, source_size
 
 
-def compare_dirs(source_dir: str, destination_dir: str, ignore_mtime: bool, quiet: bool, use_hash: bool):
+def compare_dirs(orig_source_dir: str, orig_destination_dir: str, ignore_mtime: bool, quiet: bool, use_hash: bool, no_long_path: bool):
 
-    log_differences(f"source : {source_dir} ({os.path.abspath(source_dir)})", True)
-    log_differences(f"destination : {destination_dir} ({os.path.abspath(destination_dir)})")
+    source_dir = to_long_path(orig_source_dir, no_long_path)
+    destination_dir = to_long_path(orig_destination_dir, no_long_path)
+
+    current_time = time.time()
+    log_differences(f"{local_time_string(current_time)} ({utc_time_string(current_time)})", True)
+    log_differences(f"source : {orig_source_dir} ({os.path.abspath(source_dir)})")
+    log_differences(f"destination : {orig_destination_dir} ({os.path.abspath(destination_dir)})")
     source_dir = os.path.abspath(source_dir)
     destination_dir = os.path.abspath(destination_dir)
 
@@ -115,9 +138,10 @@ def main():
     parser.add_argument('--ignore_mtime', action="store_true", default=False, help="ignore mtimes")
     parser.add_argument('--quiet', action="store_true", default=False, help="turns off status during run (e.g. status dots)")
     parser.add_argument('--use_hash', action="store_true", default=False, help="use hash for compares")
+    parser.add_argument('--no_long_path', action="store_true", default=False, help="do not use long paths (affects Windows only)")
     args = parser.parse_args()
 
-    compare_dirs(args.path[0], args.path[1], args.ignore_mtime, args.quiet, args.use_hash)
+    compare_dirs(args.path[0], args.path[1], args.ignore_mtime, args.quiet, args.use_hash, args.no_long_path)
 
 
 if __name__ == "__main__":
