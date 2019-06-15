@@ -198,3 +198,9 @@ fabric.properties
 differences.txt
 .idea/
 test/data/
+local_scripts/
+cache/
+installers/
+msvc/
+osnapy/
+temp/

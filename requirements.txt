@@ -1,4 +1,7 @@
 sundry
+boto3
+awscli
+osnap
 #
 # install from source for now
 # pyinstaller
