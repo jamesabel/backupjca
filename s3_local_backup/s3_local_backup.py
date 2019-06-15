@@ -2,11 +2,12 @@
 import argparse
 import boto3
 import subprocess
+import os
 
 from s3_local_backup import __version__, __description__
 
 
-def s3_local_backup(destination_directory: str, aws_profile: str, dry_run: bool):
+def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool):
 
     if aws_profile is not None:
         session = boto3.Session(profile_name=aws_profile)
@@ -17,7 +18,10 @@ def s3_local_backup(destination_directory: str, aws_profile: str, dry_run: bool)
     buckets = s3_client.list_buckets()['Buckets']
     print(f"found {len(buckets)} buckets")
     for bucket in buckets:
-        command_line = ['aws', 's3', 'sync', f"s3://{bucket['Name']}", destination_directory]
+        bucket_name = bucket['Name']
+        destination = os.path.join(backup_directory, bucket_name)
+        os.makedirs(destination, exist_ok=True)
+        command_line = ['aws', 's3', 'sync', f"s3://{bucket_name}", destination]
         if dry_run:
             command_line.append('--dryrun')
         print(command_line)
