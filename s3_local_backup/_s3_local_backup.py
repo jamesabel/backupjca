@@ -54,8 +54,8 @@ def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool):
         destination = os.path.join(backup_directory, bucket_name)
         os.makedirs(destination, exist_ok=True)
         s3_bucket_path = f"s3://{bucket_name}"
-        # we use --delete so we don't confuse the check with old files that are still hanging around (see below for the check)
-        sync_command_line = ['aws', 's3', 'sync', s3_bucket_path, destination, '--delete']
+        # Don't use --delete.  We want to keep 'old' files locally.
+        sync_command_line = ['aws', 's3', 'sync', s3_bucket_path, destination]
         if dry_run:
             sync_command_line.append('--dryrun')
         log.info(str(sync_command_line))
@@ -72,10 +72,19 @@ def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool):
         s3_object_count = int(ls_parsed.group(1))
         s3_total_size = int(ls_parsed.group(2))
         local_size, local_count = get_dir_size(destination)
-        if s3_object_count != local_count or s3_total_size != local_size:
-            log.warning(f"{bucket_name} not yet fully backed up (s3_count={s3_object_count}, local_count={local_count}; s3_total_size={s3_total_size}, local_size={local_size})")
+        # rough check that the sync worked
+        if s3_object_count > local_count or s3_total_size > local_size:
+            # we're missing files
+            message = "not all files backed up"
+            error_routine = log.error
+        elif s3_object_count != local_count or s3_total_size != local_size:
+            message = "mismatch"
+            error_routine = log.warning
         else:
-            log.info(f"{bucket_name} : s3_count={s3_object_count}, s3_total_size={s3_total_size}")
+            message = "match"
+            error_routine = log.info
+        if error_routine is not None:
+            error_routine(f"{bucket_name} : {message} (s3_count={s3_object_count}, local_count={local_count}; s3_total_size={s3_total_size}, local_size={local_size})")
 
 
 def main():
