@@ -4,12 +4,17 @@ import boto3
 import subprocess
 import os
 import re
+from multiprocessing import freeze_support
 
 from balsa import Balsa, get_logger
+from pressenter2exit import PressEnter2Exit
 
 from s3_local_backup import __application_name__, __author__, __version__, __description__
 
 log = get_logger(__application_name__)
+
+freeze_support()
+press_enter_to_exit = PressEnter2Exit()
 
 
 # sundry candidate
@@ -26,7 +31,6 @@ def get_dir_size(dir_path):
 def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool):
 
     os.makedirs(backup_directory, exist_ok=True)
-    log_file_path = os.path.join(backup_directory, )
 
     log.info(f"{__application_name__} : {__version__}")
 
@@ -47,10 +51,17 @@ def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool):
     print(s)
 
     for bucket in buckets:
-        bucket_name = bucket['Name']
+
+        if not press_enter_to_exit.is_alive():
+            break
 
         # do the sync
-        log.info(f"bucket : {bucket_name}")
+        bucket_name = bucket['Name']
+
+        s = f"bucket : {bucket_name}"
+        log.info(s)
+        print(s)
+
         destination = os.path.join(backup_directory, bucket_name)
         os.makedirs(destination, exist_ok=True)
         s3_bucket_path = f"s3://{bucket_name}"

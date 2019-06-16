@@ -1,5 +1,5 @@
 
-__version__ = '0.2.3'
+__version__ = '0.3.0'
 __application_name__ = 's3_local_backup'
 __author__ = 'James_Abel'
 __author_email__ = 'j@abel.co'
