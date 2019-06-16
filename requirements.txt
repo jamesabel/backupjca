@@ -1,4 +1,5 @@
 sundry
+balsa
 boto3
 awscli
 osnap
