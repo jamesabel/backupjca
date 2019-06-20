@@ -5,6 +5,7 @@ import subprocess
 import os
 import re
 from multiprocessing import freeze_support
+from typeguard import typechecked
 
 from balsa import Balsa, get_logger
 from pressenter2exit import PressEnter2Exit
@@ -28,6 +29,7 @@ def get_dir_size(dir_path):
     return dir_size, file_count
 
 
+@typechecked
 def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool, excludes: (list, None)):
 
     os.makedirs(backup_directory, exist_ok=True)
@@ -87,7 +89,7 @@ def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool, excl
             s3_total_size = int(ls_parsed.group(2))
             local_size, local_count = get_dir_size(destination)
             # rough check that the sync worked
-            if s3_object_count > local_count or s3_total_size > local_size:
+            if s3_total_size > local_size:
                 # we're missing files
                 message = "not all files backed up"
                 error_routine = log.error
@@ -108,7 +110,7 @@ def main():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      epilog=f'v{__version__}, www.abel.co, see github.com/jamesabel/backupjca for LICENSE.')
     parser.add_argument('path', help='directory to back up to')
-    parser.add_argument('-e', '--exclude', help="exclude these AWS S3 buckets")
+    parser.add_argument('-e', '--exclude', nargs='*', help="exclude these AWS S3 buckets")
     parser.add_argument('-p', '--profile', help="AWS profile (uses the default AWS profile if not given)")
     parser.add_argument('-d', '--dry_run', action='store_true', default=False,
                         help="Displays the operations that would be performed using the specified command without actually running them")

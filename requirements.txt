@@ -3,6 +3,7 @@ balsa
 pressenter2exit
 boto3
 awscli
+typeguard
 #
 # install from source for now
 # pyinstaller
