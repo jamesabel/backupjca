@@ -28,7 +28,7 @@ def get_dir_size(dir_path):
     return dir_size, file_count
 
 
-def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool):
+def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool, excludes: (list, None)):
 
     os.makedirs(backup_directory, exist_ok=True)
 
@@ -58,44 +58,48 @@ def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool):
         # do the sync
         bucket_name = bucket['Name']
 
-        s = f"bucket : {bucket_name}"
-        log.info(s)
-        print(s)
-
-        destination = os.path.join(backup_directory, bucket_name)
-        os.makedirs(destination, exist_ok=True)
-        s3_bucket_path = f"s3://{bucket_name}"
-        # Don't use --delete.  We want to keep 'old' files locally.
-        sync_command_line = ['aws', 's3', 'sync', s3_bucket_path, destination]
-        if dry_run:
-            sync_command_line.append('--dryrun')
-        log.info(str(sync_command_line))
-        sync_result = subprocess.run(sync_command_line, stdout=subprocess.PIPE)
-        for line in sync_result.stdout.decode(decoding).splitlines():
-            log.info(line.strip())
-
-        # check the results
-        ls_command_line = ['aws', 's3', 'ls', '--summarize', '--recursive', s3_bucket_path]
-        log.info(str(ls_command_line))
-        ls_result = subprocess.run(ls_command_line, stdout=subprocess.PIPE)
-        ls_stdout = ''.join([c for c in ls_result.stdout.decode(decoding) if c not in ' \r\n'])  # remove all whitespace
-        ls_parsed = ls_re.search(ls_stdout)
-        s3_object_count = int(ls_parsed.group(1))
-        s3_total_size = int(ls_parsed.group(2))
-        local_size, local_count = get_dir_size(destination)
-        # rough check that the sync worked
-        if s3_object_count > local_count or s3_total_size > local_size:
-            # we're missing files
-            message = "not all files backed up"
-            error_routine = log.error
-        elif s3_object_count != local_count or s3_total_size != local_size:
-            message = "mismatch"
-            error_routine = log.warning
+        if excludes is not None and bucket_name in excludes:
+            log.info(f"excluding {bucket_name}")
         else:
-            message = "match"
-            error_routine = log.info
-        if error_routine is not None:
-            error_routine(f"{bucket_name} : {message} (s3_count={s3_object_count}, local_count={local_count}; s3_total_size={s3_total_size}, local_size={local_size})")
+            s = f"bucket : {bucket_name}"
+            log.info(s)
+            print(s)
+
+            destination = os.path.join(backup_directory, bucket_name)
+            os.makedirs(destination, exist_ok=True)
+            s3_bucket_path = f"s3://{bucket_name}"
+            # Don't use --delete.  We want to keep 'old' files locally.
+            sync_command_line = ['aws', 's3', 'sync', s3_bucket_path, destination]
+            if dry_run:
+                sync_command_line.append('--dryrun')
+            log.info(str(sync_command_line))
+            sync_result = subprocess.run(sync_command_line, stdout=subprocess.PIPE)
+            for line in sync_result.stdout.decode(decoding).splitlines():
+                log.info(line.strip())
+
+            # check the results
+            ls_command_line = ['aws', 's3', 'ls', '--summarize', '--recursive', s3_bucket_path]
+            log.info(str(ls_command_line))
+            ls_result = subprocess.run(ls_command_line, stdout=subprocess.PIPE)
+            ls_stdout = ''.join([c for c in ls_result.stdout.decode(decoding) if c not in ' \r\n'])  # remove all whitespace
+            ls_parsed = ls_re.search(ls_stdout)
+            s3_object_count = int(ls_parsed.group(1))
+            s3_total_size = int(ls_parsed.group(2))
+            local_size, local_count = get_dir_size(destination)
+            # rough check that the sync worked
+            if s3_object_count > local_count or s3_total_size > local_size:
+                # we're missing files
+                message = "not all files backed up"
+                error_routine = log.error
+            elif s3_total_size != local_size:
+                # don't compare number of files since aws s3 sync does not copy files of zero size
+                message = "mismatch"
+                error_routine = log.warning
+            else:
+                message = "match"
+                error_routine = log.info
+            if error_routine is not None:
+                error_routine(f"{bucket_name} : {message} (s3_count={s3_object_count}, local_count={local_count}; s3_total_size={s3_total_size}, local_size={local_size})")
 
 
 def main():
@@ -104,6 +108,7 @@ def main():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      epilog=f'v{__version__}, www.abel.co, see github.com/jamesabel/backupjca for LICENSE.')
     parser.add_argument('path', help='directory to back up to')
+    parser.add_argument('-e', '--exclude', help="exclude these AWS S3 buckets")
     parser.add_argument('-p', '--profile', help="AWS profile (uses the default AWS profile if not given)")
     parser.add_argument('-d', '--dry_run', action='store_true', default=False,
                         help="Displays the operations that would be performed using the specified command without actually running them")
@@ -116,4 +121,4 @@ def main():
     balsa.delete_existing_log_files = True
     balsa.init_logger()
 
-    s3_local_backup(args.path, args.profile, args.dry_run)
+    s3_local_backup(args.path, args.profile, args.dry_run, args.exclude)
