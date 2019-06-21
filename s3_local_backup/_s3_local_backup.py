@@ -30,7 +30,7 @@ def get_dir_size(dir_path):
 
 
 @typechecked
-def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool, excludes: (list, None)):
+def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bool, excludes: (list, None)):
 
     os.makedirs(backup_directory, exist_ok=True)
 
@@ -61,7 +61,9 @@ def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool, excl
         bucket_name = bucket['Name']
 
         if excludes is not None and bucket_name in excludes:
-            log.info(f"excluding {bucket_name}")
+            s = f"excluding bucket : {bucket_name}"
+            log.info(s)
+            print(s)
         else:
             s = f"bucket : {bucket_name}"
             log.info(s)
@@ -113,7 +115,7 @@ def main():
     parser.add_argument('-e', '--exclude', nargs='*', help="exclude these AWS S3 buckets")
     parser.add_argument('-p', '--profile', help="AWS profile (uses the default AWS profile if not given)")
     parser.add_argument('-d', '--dry_run', action='store_true', default=False,
-                        help="Displays the operations that would be performed using the specified command without actually running them")
+                        help="Displays operations that would be performed using the specified command without actually running them")
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help="set verbose")
     args = parser.parse_args()
 
