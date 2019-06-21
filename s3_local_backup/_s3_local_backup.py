@@ -30,7 +30,7 @@ def get_dir_size(dir_path):
 
 
 @typechecked
-def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool, excludes: (list, None)):
+def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bool, excludes: (list, None)):
 
     os.makedirs(backup_directory, exist_ok=True)
 
@@ -61,7 +61,9 @@ def s3_local_backup(backup_directory: str, aws_profile: str, dry_run: bool, excl
         bucket_name = bucket['Name']
 
         if excludes is not None and bucket_name in excludes:
-            log.info(f"excluding {bucket_name}")
+            s = f"excluding bucket : {bucket_name}"
+            log.info(s)
+            print(s)
         else:
             s = f"bucket : {bucket_name}"
             log.info(s)
