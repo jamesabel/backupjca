@@ -43,8 +43,8 @@ def get_git_auth():
 
     assert(username is not None and len(username) > 0)
     assert(password is not None and len(password) > 0)
-    print("Note: Using regular username/password.  Use toekns and 2FA once I can get them to work with github2.")
-    gh = github3.login(username, password=password) # , two_factor_callback=get_two_factor_code)
+    print("Note: Using regular username/password.  Use tokens and 2FA once I can get them to work with github2.")
+    gh = github3.login(username, password=password)  # , two_factor_callback=get_two_factor_code)
 
     return gh
 
