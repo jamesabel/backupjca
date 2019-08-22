@@ -8,7 +8,7 @@ import time
 
 from sundry import get_file_sha256, local_time_string, utc_time_string
 
-from compare_dirs import __version__
+from backupjca import __version__
 
 # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maxpath
 windows_long_path_prefix = "\\\\?\\"  # \\?\
@@ -135,7 +135,7 @@ def compare_dirs(orig_source_dir: str, orig_destination_dir: str, ignore_mtime: 
     return compare_count, miscompare_count
 
 
-def main():
+def compare_dirs_main():
 
     parser = argparse.ArgumentParser(description=f'Verify all files in the source directory are in destination directory.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -152,4 +152,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    compare_dirs_main()

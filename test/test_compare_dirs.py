@@ -1,7 +1,7 @@
 
 from sundry import to_bool
 
-from compare_dirs import compare_dirs
+from backupjca import compare_dirs
 
 
 def test_compare_dirs():

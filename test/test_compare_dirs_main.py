@@ -1,5 +1,5 @@
 
-from compare_dirs import main
+from backupjca import main
 
 
 def test_compare_dirs_main():
