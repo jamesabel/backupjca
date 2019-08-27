@@ -1,9 +1,11 @@
 import os
 import getpass
 import json
+import shutil
 
 import github3
 from git import Repo
+from git.exc import GitCommandError
 import appdirs
 from pressenter2exit import PressEnter2ExitGUI
 
@@ -44,7 +46,7 @@ def get_git_auth():
 
 def git_local_backup(backup_dir):
 
-    print("note: pulls are to default branch - other branches are not backed up")
+    print("Note: pulls are to default branch - other branches are not backed up")
 
     press_enter_to_exit = PressEnter2ExitGUI()
 
@@ -56,9 +58,16 @@ def git_local_backup(backup_dir):
 
         repo_string = str(repo)
         repo_dir = os.path.abspath(os.path.join(backup_dir, repo_string))
+        pull_success = False
         if os.path.exists(repo_dir):
             print(f'git pull "{repo_dir}"')
-            Repo(repo_dir).remote().pull()
-        else:
+            try:
+                Repo(repo_dir).remote().pull()
+                pull_success = True
+            except GitCommandError as e:
+                print(e)
+        if not pull_success:
+            if os.path.exists(repo_dir):
+                shutil.rmtree(repo_dir, ignore_errors=True)
             print(f'git clone "{repo_string}" to "{repo_dir}"')
             Repo.clone_from(repo.clone_url, repo_dir)
