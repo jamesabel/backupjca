@@ -28,7 +28,7 @@ def main():
     balsa.init_logger()
 
     if args.s3 and args.github:
-        print('please specify only one backup to do, not both (S3 or github')
+        print('please specify only one backup to do, not both (S3 or github)')
     elif args.s3:
         s3_local_backup(args.path, args.profile, args.dry_run, args.exclude)
     elif args.github:
