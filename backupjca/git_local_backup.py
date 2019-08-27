@@ -3,18 +3,10 @@ import getpass
 import json
 
 import github3
+from git import Repo
 import appdirs
-from sundry import is_main
 
 from backupjca import __application_name__, __author__
-
-
-def get_two_factor_code():
-    code = None
-    while code is None or len(code) < 1:
-        code = input('Enter 2FA code:')
-        print(code)
-    return code
 
 
 def get_git_auth():
@@ -49,13 +41,16 @@ def get_git_auth():
     return gh
 
 
-def git_local_backup():
+def git_local_backup(backup_dir):
 
+    print("note: pulls are to default branch - other branches are not backed up")
     gh = get_git_auth()
     for repo in gh.repositories():
-        # todo: STOPPED HERE - CLONE REPOS DOWN TO A DIR
-        print(repo.url)
-
-
-if is_main():
-    get_git_auth()
+        repo_string = str(repo)
+        repo_dir = os.path.abspath(os.path.join(backup_dir, repo_string))
+        if os.path.exists(repo_dir):
+            print(f'git pull "{repo_dir}"')
+            Repo(repo_dir).remote().pull()
+        else:
+            print(f'git clone "{repo_string}" to "{repo_dir}"')
+            Repo.clone_from(repo.clone_url, repo_dir)
