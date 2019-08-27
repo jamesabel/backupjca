@@ -5,6 +5,7 @@ import json
 import github3
 from git import Repo
 import appdirs
+from pressenter2exit import PressEnter2ExitGUI
 
 from backupjca import __application_name__, __author__
 
@@ -44,8 +45,15 @@ def get_git_auth():
 def git_local_backup(backup_dir):
 
     print("note: pulls are to default branch - other branches are not backed up")
+
+    press_enter_to_exit = PressEnter2ExitGUI()
+
     gh = get_git_auth()
     for repo in gh.repositories():
+
+        if not press_enter_to_exit.is_alive():
+            break
+
         repo_string = str(repo)
         repo_dir = os.path.abspath(os.path.join(backup_dir, repo_string))
         if os.path.exists(repo_dir):
