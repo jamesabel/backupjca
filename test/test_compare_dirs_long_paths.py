@@ -1,7 +1,7 @@
 
 import os
 
-from compare_dirs import compare_dirs, windows_long_path_prefix
+from backupjca import compare_dirs, windows_long_path_prefix
 
 
 def test_compare_dirs_long_paths():

@@ -3,6 +3,8 @@ balsa
 pressenter2exit
 boto3
 awscli
+github3.py
+GitPython
 typeguard
 #
 # install from source for now

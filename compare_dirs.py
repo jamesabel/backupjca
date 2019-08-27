@@ -1,4 +1,4 @@
 
-from compare_dirs import main
+from backupjca import compare_dirs_main
 
-main()
+compare_dirs_main()

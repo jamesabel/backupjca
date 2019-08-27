@@ -1,7 +1,7 @@
 
 import os
 
-from compare_dirs import compare_dirs, windows_long_path_prefix, ignore_files
+from backupjca import compare_dirs, windows_long_path_prefix, ignore_files
 
 
 def test_compare_dirs_ignore_files():

@@ -1,5 +1,4 @@
 
-import argparse
 import boto3
 import subprocess
 import os
@@ -7,15 +6,14 @@ import re
 from multiprocessing import freeze_support
 from typeguard import typechecked
 
-from balsa import Balsa, get_logger
-from pressenter2exit import PressEnter2Exit
+from balsa import get_logger
+from pressenter2exit import PressEnter2ExitGUI
 
-from s3_local_backup import __application_name__, __author__, __version__, __description__
+from backupjca import __application_name__, __version__
 
 log = get_logger(__application_name__)
 
 freeze_support()
-press_enter_to_exit = PressEnter2Exit()
 
 
 # sundry candidate
@@ -51,6 +49,8 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
     s = f"found {len(buckets)} buckets"
     log.info(s)
     print(s)
+
+    press_enter_to_exit = PressEnter2ExitGUI()
 
     for bucket in buckets:
 
@@ -104,25 +104,3 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
                 error_routine = log.info
             if error_routine is not None:
                 error_routine(f"{bucket_name} : {message} (s3_count={s3_object_count}, local_count={local_count}; s3_total_size={s3_total_size}, local_size={local_size})")
-
-
-def main():
-
-    parser = argparse.ArgumentParser(description=__description__,
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     epilog=f'v{__version__}, www.abel.co, see github.com/jamesabel/backupjca for LICENSE.')
-    parser.add_argument('path', help='directory to back up to')
-    parser.add_argument('-e', '--exclude', nargs='*', help="exclude these AWS S3 buckets")
-    parser.add_argument('-p', '--profile', help="AWS profile (uses the default AWS profile if not given)")
-    parser.add_argument('-d', '--dry_run', action='store_true', default=False,
-                        help="Displays operations that would be performed using the specified command without actually running them")
-    parser.add_argument('-v', '--verbose', action='store_true', default=False, help="set verbose")
-    args = parser.parse_args()
-
-    balsa = Balsa(__application_name__, __author__)
-    balsa.verbose = args.verbose
-    balsa.log_directory = args.path
-    balsa.delete_existing_log_files = True
-    balsa.init_logger()
-
-    s3_local_backup(args.path, args.profile, args.dry_run, args.exclude)

@@ -204,3 +204,4 @@ installers/
 msvc/
 osnapy/
 temp/
+secrets/
