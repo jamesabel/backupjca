@@ -69,10 +69,10 @@ def git_local_backup(backup_dir):
 
         repo_name = str(github_repo)
         repo_dir = os.path.abspath(os.path.join(backup_dir, repo_name))
-        pull_success = False
         branches = github_repo.branches()
 
         # if we've cloned previously, just do a pull
+        pull_success = False
         if os.path.exists(repo_dir):
             try:
                 pull_branches(repo_name, branches, repo_dir)
