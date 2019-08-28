@@ -1,9 +1,11 @@
 
 import argparse
 
-from balsa import Balsa
+from balsa import Balsa, get_logger
 
 from backupjca import __application_name__, __author__, __version__, __description__, s3_local_backup, git_local_backup
+
+log = get_logger(__application_name__)
 
 
 def main():
@@ -26,6 +28,9 @@ def main():
     balsa.log_directory = args.path
     balsa.delete_existing_log_files = True
     balsa.init_logger()
+    log.info(f"__application_name__={__application_name__}")
+    log.info(f"__author__={__author__}")
+    log.info(f"__version__={__version__}")
 
     if args.s3 and args.github:
         print('please specify only one backup to do, not both (S3 or github)')

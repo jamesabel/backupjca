@@ -8,10 +8,18 @@ from git import Repo
 from git.exc import GitCommandError
 import appdirs
 from pressenter2exit import PressEnter2ExitGUI
+from balsa import get_logger
 
 from backupjca import __application_name__, __author__
 
 press_enter_to_exit = PressEnter2ExitGUI(title="github local backup")
+
+log = get_logger(__application_name__)
+
+
+def print_log(s):
+    log.info(s)
+    print(s)
 
 
 def get_git_auth():
@@ -54,7 +62,7 @@ def pull_branches(repo_name, branches, repo_dir):
             break
 
         branch_name = branch.name
-        print(f'git pull "{repo_name}" branch:"{branch_name}" to {repo_dir}')
+        print_log(f'git pull "{repo_name}" branch:"{branch_name}" to {repo_dir}')
         git_repo.git.checkout(branch_name)
         git_repo.git.pull()
 
@@ -78,13 +86,15 @@ def git_local_backup(backup_dir):
                 pull_branches(repo_name, branches, repo_dir)
                 pull_success = True
             except GitCommandError as e:
-                print(e)
-                print(f'could not pull "{repo_dir}" - will try to start over and do a clone of "{repo_name}"')
+                log.info(e)
+                print_log(f'could not pull "{repo_dir}" - will try to start over and do a clone of "{repo_name}"')
 
         # new to us - clone the repo
         if not pull_success:
             if os.path.exists(repo_dir):
                 shutil.rmtree(repo_dir, ignore_errors=True)
-            print(f'git clone "{repo_name}" to "{repo_dir}"')
+
+            print_log(f'git clone "{repo_name}" to "{repo_dir}"')
+
             Repo.clone_from(github_repo.clone_url, repo_dir)
             pull_branches(repo_name, branches, repo_dir)
