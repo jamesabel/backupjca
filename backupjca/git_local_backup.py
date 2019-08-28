@@ -11,6 +11,8 @@ from pressenter2exit import PressEnter2ExitGUI
 
 from backupjca import __application_name__, __author__
 
+press_enter_to_exit = PressEnter2ExitGUI(title="github local backup")
+
 
 def get_git_auth():
 
@@ -44,30 +46,45 @@ def get_git_auth():
     return gh
 
 
-def git_local_backup(backup_dir):
-
-    print("Note: pulls are to default branch - other branches are not backed up")
-
-    press_enter_to_exit = PressEnter2ExitGUI()
-
-    gh = get_git_auth()
-    for repo in gh.repositories():
+def pull_branches(repo_name, branches, repo_dir):
+    git_repo = Repo(repo_dir)
+    for branch in branches:
 
         if not press_enter_to_exit.is_alive():
             break
 
-        repo_string = str(repo)
-        repo_dir = os.path.abspath(os.path.join(backup_dir, repo_string))
+        branch_name = branch.name
+        print(f'git pull "{repo_name}" branch:"{branch_name}" to {repo_dir}')
+        git_repo.git.checkout(branch_name)
+        git_repo.git.pull()
+
+
+def git_local_backup(backup_dir):
+
+    gh = get_git_auth()
+    for github_repo in gh.repositories():
+
+        if not press_enter_to_exit.is_alive():
+            break
+
+        repo_name = str(github_repo)
+        repo_dir = os.path.abspath(os.path.join(backup_dir, repo_name))
         pull_success = False
+        branches = github_repo.branches()
+
+        # if we've cloned previously, just do a pull
         if os.path.exists(repo_dir):
-            print(f'git pull "{repo_dir}"')
             try:
-                Repo(repo_dir).remote().pull()
+                pull_branches(repo_name, branches, repo_dir)
                 pull_success = True
             except GitCommandError as e:
                 print(e)
+                print(f'could not pull "{repo_dir}" - will try to start over and do a clone of "{repo_name}"')
+
+        # new to us - clone the repo
         if not pull_success:
             if os.path.exists(repo_dir):
                 shutil.rmtree(repo_dir, ignore_errors=True)
-            print(f'git clone "{repo_string}" to "{repo_dir}"')
-            Repo.clone_from(repo.clone_url, repo_dir)
+            print(f'git clone "{repo_name}" to "{repo_dir}"')
+            Repo.clone_from(github_repo.clone_url, repo_dir)
+            pull_branches(repo_name, branches, repo_dir)
