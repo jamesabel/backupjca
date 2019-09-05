@@ -50,7 +50,7 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
     log.info(s)
     print(s)
 
-    press_enter_to_exit = PressEnter2ExitGUI()
+    press_enter_to_exit = PressEnter2ExitGUI(title="S3 local backup")
 
     for bucket in buckets:
 

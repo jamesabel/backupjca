@@ -39,4 +39,4 @@ def main():
     elif args.github:
         git_local_backup(args.path)
     else:
-        print('nothing to do - please specify a backup to do (S3 or github')
+        print('nothing to do - please specify a backup to do (S3 or github)')
