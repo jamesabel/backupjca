@@ -2,6 +2,7 @@ import os
 import getpass
 import json
 import shutil
+from functools import lru_cache
 
 import github3
 from git import Repo
@@ -12,14 +13,18 @@ from balsa import get_logger
 
 from backupjca import __application_name__, __author__
 
-press_enter_to_exit = PressEnter2ExitGUI(title="github local backup")
-
 log = get_logger(__application_name__)
 
 
 def print_log(s):
     log.info(s)
     print(s)
+
+
+# just instantiate once
+@lru_cache()
+def get_press_enter_to_exit() -> PressEnter2ExitGUI:
+    return PressEnter2ExitGUI(title="github local backup")
 
 
 def get_git_auth():
@@ -58,7 +63,7 @@ def pull_branches(repo_name, branches, repo_dir):
     git_repo = Repo(repo_dir)
     for branch in branches:
 
-        if not press_enter_to_exit.is_alive():
+        if not get_press_enter_to_exit().is_alive():
             break
 
         branch_name = branch.name
@@ -72,7 +77,7 @@ def git_local_backup(backup_dir):
     gh = get_git_auth()
     for github_repo in gh.repositories():
 
-        if not press_enter_to_exit.is_alive():
+        if not get_press_enter_to_exit().is_alive():
             break
 
         repo_name = str(github_repo)
