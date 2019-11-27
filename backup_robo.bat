@@ -8,9 +8,9 @@ REM Documents is our name for this session (used for naming log files)
 REM backupjca.bat c:\Users\joe\Documents l:\backup\joe\Documents Documents
 REM
 REM you should create a .bat file that calls this .bat like:
-REM call backupjca.bat c:\Users\joe\Documents l:\backup\joe\Documents Documents
-REM call backupjca.bat c:\Users\joe\Favorites l:\backup\joe\Favorites Favorites
-REM call backupjca.bat c:\Users\joe\Desktop   l:\backup\joe\Desktop   Desktop
+REM call backup_robo.bat c:\Users\joe\Documents l:\backup\joe\Documents Documents
+REM call backup_robo.bat c:\Users\joe\Favorites l:\backup\joe\Favorites Favorites
+REM call backup_robo.bat c:\Users\joe\Desktop   l:\backup\joe\Desktop   Desktop
 REM etc
 REM 
 echo on
