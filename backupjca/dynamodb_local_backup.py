@@ -1,14 +1,23 @@
 import os
 import pickle
+import logging
+
+from botocore.exceptions import NoRegionError
 
 from sundry import aws_scan_table, aws_get_client
 
-from backupjca import __application_name__, __author__
+from backupjca import __application_name__
+
+log = logging.getLogger(__application_name__)
 
 
 def dynamodb_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bool, excludes: (list, None)):
 
-    dynamodb_client = aws_get_client("dynamodb", aws_profile)
+    try:
+        dynamodb_client = aws_get_client("dynamodb", aws_profile)
+    except NoRegionError as e:
+        log.fatal(e)
+        return
 
     tables = []
     all_tables_found = False

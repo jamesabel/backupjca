@@ -74,18 +74,27 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
             os.makedirs(destination, exist_ok=True)
             s3_bucket_path = f"s3://{bucket_name}"
             # Don't use --delete.  We want to keep 'old' files locally.
-            sync_command_line = ["aws", "s3", "sync", s3_bucket_path, destination]
+            sync_command_line = [os.path.abspath(os.path.join("venv", "Scripts", "aws")), "s3", "sync", s3_bucket_path, os.path.abspath(destination)]
             if dry_run:
                 sync_command_line.append("--dryrun")
-            log.info(str(sync_command_line))
-            sync_result = subprocess.run(sync_command_line, stdout=subprocess.PIPE)
-            for line in sync_result.stdout.decode(decoding).splitlines():
-                log.info(line.strip())
+            sync_command_line_str = " ".join(sync_command_line)
+            log.info(sync_command_line_str)
+
+            try:
+                sync_result = subprocess.call(sync_command_line_str, stdout=subprocess.PIPE, shell=True)
+            except FileNotFoundError as e:
+                log.critical(e)
+                log.critical(f'error executing "{" ".join(sync_command_line)}"')
+                return
+
+            #for line in sync_result.stdout.decode(decoding).splitlines():
+            #    log.info(line.strip())
 
             # check the results
             ls_command_line = ["aws", "s3", "ls", "--summarize", "--recursive", s3_bucket_path]
-            log.info(str(ls_command_line))
-            ls_result = subprocess.run(ls_command_line, stdout=subprocess.PIPE)
+            ls_command_line_str = " ".join(ls_command_line)
+            log.info(ls_command_line_str)
+            ls_result = subprocess.run(ls_command_line_str, stdout=subprocess.PIPE, shell=True)
             ls_stdout = "".join([c for c in ls_result.stdout.decode(decoding) if c not in " \r\n"])  # remove all whitespace
             ls_parsed = ls_re.search(ls_stdout)
             s3_object_count = int(ls_parsed.group(1))
