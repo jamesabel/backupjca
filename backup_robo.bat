@@ -1,5 +1,5 @@
 REM usage:
-REM backupjca.bat source dest name
+REM backup_robo.bat source dest name
 REM
 REM example:
 REM c:\Users\joe\Documents is the folder we want to back up
@@ -23,4 +23,3 @@ echo %2 >> %2_cmd.txt
 echo %3 >> %2_cmd.txt
 REM use /MIR for true backups, however we're using /e for now since we want to keep everything (even what's been deleted from the source)
 robocopy %1 %2 *.* /e /DCOPY:T /COPYALL /R:2 /W:1 /B /LOG:%2\..\%3_log.log /TS /NP /TEE /XD $RECYCLE.BIN "System Volume Information" 
-
