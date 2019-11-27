@@ -5,7 +5,7 @@ REM example:
 REM c:\Users\joe\Documents is the folder we want to back up
 REM l: is our backup drive (e.g. an external USB drive - we make a backup folder to distinguish it from regular files)
 REM Documents is our name for this session (used for naming log files)
-REM backupjca.bat c:\Users\joe\Documents l:\backup\joe\Documents Documents
+REM backup_robo.bat c:\Users\joe\Documents l:\backup\joe\Documents Documents
 REM
 REM you should create a .bat file that calls this .bat like:
 REM call backup_robo.bat c:\Users\joe\Documents l:\backup\joe\Documents Documents
