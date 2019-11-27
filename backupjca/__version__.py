@@ -1,4 +1,4 @@
-__version__ = "0.10.1"
+__version__ = "0.10.2"
 __application_name__ = "backupjca"
 __author__ = "abel"
 __author_email__ = "j@abel.co"
