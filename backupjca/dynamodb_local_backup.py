@@ -44,7 +44,7 @@ def dynamodb_local_backup(backup_directory: str, aws_profile: (str, None), dry_r
         else:
             if not dry_run:
                 table_contents = aws_scan_table(table_name, aws_profile)
-                dir_path= os.path.join(backup_directory, "dynamodb")
+                dir_path = os.path.join(backup_directory, "dynamodb")
                 os.makedirs(dir_path, exist_ok=True)
                 with open(os.path.join(dir_path, f"{table_name}.pickle"), "wb") as f:
                     pickle.dump(table_contents, f)
