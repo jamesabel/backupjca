@@ -81,14 +81,14 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
             log.info(sync_command_line_str)
 
             try:
-                sync_result = subprocess.call(sync_command_line_str, stdout=subprocess.PIPE, shell=True)
+                sync_result = subprocess.run(sync_command_line_str, stdout=subprocess.PIPE, shell=True)
             except FileNotFoundError as e:
                 log.critical(e)
                 log.critical(f'error executing "{" ".join(sync_command_line)}"')
                 return
 
-            #for line in sync_result.stdout.decode(decoding).splitlines():
-            #    log.info(line.strip())
+            for line in sync_result.stdout.decode(decoding).splitlines():
+                log.info(line.strip())
 
             # check the results
             ls_command_line = ["aws", "s3", "ls", "--summarize", "--recursive", s3_bucket_path]

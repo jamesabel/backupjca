@@ -2,7 +2,6 @@ import os
 import pickle
 import logging
 
-from boto3.session import Session
 from botocore.exceptions import NoRegionError
 
 from sundry import aws_scan_table, aws_get_client
@@ -15,15 +14,10 @@ log = logging.getLogger(__application_name__)
 def dynamodb_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bool, excludes: (list, None)):
 
     try:
-
-        # I don't know why this doesn't work:
-        # dynamodb_client = aws_get_client("dynamodb", aws_profile)
-
-        session = Session(profile_name=aws_profile)
-        dynamodb_client = session.client("dynamodb")
-
+        dynamodb_client = aws_get_client("dynamodb", aws_profile)
     except NoRegionError as e:
-        log.fatal(e)
+        log.error(e)
+        log.error("make sure your config follows the form in https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html")
         return
 
     tables = []
