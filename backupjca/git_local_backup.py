@@ -74,6 +74,8 @@ def pull_branches(repo_name, branches, repo_dir):
 
 def github_local_backup(backup_dir):
 
+    backup_dir = os.path.join(backup_dir, "github")
+
     gh = get_github_auth()
     for github_repo in gh.repositories():
 
