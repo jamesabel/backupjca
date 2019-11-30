@@ -46,6 +46,7 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
     # we delete all whitespace below
     ls_re = re.compile(r"TotalObjects:([0-9]+)TotalSize:([0-9]+)")
 
+    # todo: use pagination?
     buckets = s3_client.list_buckets()["Buckets"]
     s = f"found {len(buckets)} buckets"
     log.info(s)

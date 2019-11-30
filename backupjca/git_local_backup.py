@@ -27,7 +27,7 @@ def get_press_enter_to_exit() -> PressEnter2ExitGUI:
     return PressEnter2ExitGUI(title="github local backup")
 
 
-def get_git_auth():
+def get_github_auth():
 
     username_string = "username"
     password_string = "password"
@@ -72,9 +72,9 @@ def pull_branches(repo_name, branches, repo_dir):
         git_repo.git.pull()
 
 
-def git_local_backup(backup_dir):
+def github_local_backup(backup_dir):
 
-    gh = get_git_auth()
+    gh = get_github_auth()
     for github_repo in gh.repositories():
 
         if not get_press_enter_to_exit().is_alive():
