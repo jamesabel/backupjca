@@ -71,11 +71,13 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
             log.info(s)
             print(s)
 
+            aws_cli_path = f'"{os.path.abspath(os.path.join("venv", "Scripts", "aws"))}"'
+
             destination = os.path.join(backup_directory, bucket_name)
             os.makedirs(destination, exist_ok=True)
             s3_bucket_path = f"s3://{bucket_name}"
             # Don't use --delete.  We want to keep 'old' files locally.
-            sync_command_line = [os.path.abspath(os.path.join("venv", "Scripts", "aws")), "s3", "sync", s3_bucket_path, os.path.abspath(destination)]
+            sync_command_line = [aws_cli_path, "s3", "sync", s3_bucket_path, os.path.abspath(destination)]
             if dry_run:
                 sync_command_line.append("--dryrun")
             sync_command_line_str = " ".join(sync_command_line)
@@ -92,7 +94,7 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
                 log.info(line.strip())
 
             # check the results
-            ls_command_line = ["aws", "s3", "ls", "--summarize", "--recursive", s3_bucket_path]
+            ls_command_line = [aws_cli_path, "s3", "ls", "--summarize", "--recursive", s3_bucket_path]
             ls_command_line_str = " ".join(ls_command_line)
             log.info(ls_command_line_str)
             ls_result = subprocess.run(ls_command_line_str, stdout=subprocess.PIPE, shell=True)
