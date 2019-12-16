@@ -1,4 +1,3 @@
-
 import boto3
 import subprocess
 import os
@@ -30,27 +29,30 @@ def get_dir_size(dir_path):
 @typechecked
 def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bool, excludes: (list, None)):
 
+    backup_directory = os.path.join(backup_directory, "s3")
+
     os.makedirs(backup_directory, exist_ok=True)
 
     log.info(f"{__application_name__} : {__version__}")
 
     if aws_profile is not None:
         session = boto3.Session(profile_name=aws_profile)
-        s3_client = session.client('s3')
+        s3_client = session.client("s3")
     else:
-        s3_client = boto3.client('s3')
+        s3_client = boto3.client("s3")
 
     decoding = "utf-8"
 
     # we delete all whitespace below
     ls_re = re.compile(r"TotalObjects:([0-9]+)TotalSize:([0-9]+)")
 
-    buckets = s3_client.list_buckets()['Buckets']
+    # todo: use pagination?
+    buckets = s3_client.list_buckets()["Buckets"]
     s = f"found {len(buckets)} buckets"
     log.info(s)
     print(s)
 
-    press_enter_to_exit = PressEnter2ExitGUI()
+    press_enter_to_exit = PressEnter2ExitGUI(title="S3 local backup")
 
     for bucket in buckets:
 
@@ -58,7 +60,7 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
             break
 
         # do the sync
-        bucket_name = bucket['Name']
+        bucket_name = bucket["Name"]
 
         if excludes is not None and bucket_name in excludes:
             s = f"excluding bucket : {bucket_name}"
@@ -73,19 +75,28 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
             os.makedirs(destination, exist_ok=True)
             s3_bucket_path = f"s3://{bucket_name}"
             # Don't use --delete.  We want to keep 'old' files locally.
-            sync_command_line = ['aws', 's3', 'sync', s3_bucket_path, destination]
+            sync_command_line = [os.path.abspath(os.path.join("venv", "Scripts", "aws")), "s3", "sync", s3_bucket_path, os.path.abspath(destination)]
             if dry_run:
-                sync_command_line.append('--dryrun')
-            log.info(str(sync_command_line))
-            sync_result = subprocess.run(sync_command_line, stdout=subprocess.PIPE)
+                sync_command_line.append("--dryrun")
+            sync_command_line_str = " ".join(sync_command_line)
+            log.info(sync_command_line_str)
+
+            try:
+                sync_result = subprocess.run(sync_command_line_str, stdout=subprocess.PIPE, shell=True)
+            except FileNotFoundError as e:
+                log.critical(e)
+                log.critical(f'error executing "{" ".join(sync_command_line)}"')
+                return
+
             for line in sync_result.stdout.decode(decoding).splitlines():
                 log.info(line.strip())
 
             # check the results
-            ls_command_line = ['aws', 's3', 'ls', '--summarize', '--recursive', s3_bucket_path]
-            log.info(str(ls_command_line))
-            ls_result = subprocess.run(ls_command_line, stdout=subprocess.PIPE)
-            ls_stdout = ''.join([c for c in ls_result.stdout.decode(decoding) if c not in ' \r\n'])  # remove all whitespace
+            ls_command_line = ["aws", "s3", "ls", "--summarize", "--recursive", s3_bucket_path]
+            ls_command_line_str = " ".join(ls_command_line)
+            log.info(ls_command_line_str)
+            ls_result = subprocess.run(ls_command_line_str, stdout=subprocess.PIPE, shell=True)
+            ls_stdout = "".join([c for c in ls_result.stdout.decode(decoding) if c not in " \r\n"])  # remove all whitespace
             ls_parsed = ls_re.search(ls_stdout)
             s3_object_count = int(ls_parsed.group(1))
             s3_total_size = int(ls_parsed.group(2))

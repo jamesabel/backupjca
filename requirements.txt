@@ -10,6 +10,7 @@ typeguard
 # install from source for now
 # pyinstaller
 #
+black
 pytest
 coverage
 pytest-cov
