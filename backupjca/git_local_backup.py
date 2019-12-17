@@ -3,6 +3,7 @@ import getpass
 import json
 import shutil
 from functools import lru_cache
+from typing import Iterable
 
 import github3
 from git import Repo
@@ -59,7 +60,7 @@ def get_github_auth():
     return gh
 
 
-def pull_branches(repo_name, branches, repo_dir):
+def pull_branches(repo_name: str, branches: Iterable, repo_dir: str):
     git_repo = Repo(repo_dir)
     for branch in branches:
 
@@ -72,9 +73,9 @@ def pull_branches(repo_name, branches, repo_dir):
         git_repo.git.pull()
 
 
-def github_local_backup(backup_dir):
+def github_local_backup(backup_dir: str, github_subdir: str):
 
-    backup_dir = os.path.join(backup_dir, "github")
+    backup_dir = os.path.join(backup_dir, github_subdir)
 
     gh = get_github_auth()
     for github_repo in gh.repositories():

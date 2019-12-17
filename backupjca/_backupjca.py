@@ -20,6 +20,7 @@ def main():
     parser.add_argument("-s", "--s3", action="store_true", default=False, help="backup AWS S3")
     parser.add_argument("-d", "--dynamodb", action="store_true", default=False, help="backup AWS DynamoDB")
     parser.add_argument("-g", "--github", action="store_true", default=False, help="backup github")
+    parser.add_argument("--github_subdir", default="github", help="github subdir (can be used to shorten the overall path)")
     parser.add_argument("-e", "--exclude", nargs="*", help="exclude these AWS S3 buckets and/or tables")
     parser.add_argument("-x", "--exclude_file", help="exclude the AWS S3 buckets and/or tables listed in this file")
     parser.add_argument("-p", "--profile", help="AWS profile (uses the default AWS profile if not given)")
@@ -58,7 +59,7 @@ def main():
         dynamodb_local_backup(args.path, args.profile, args.dry_run, exclusion_list)
         did_something = True
     if args.github:
-        github_local_backup(args.path)
+        github_local_backup(args.path, args.github_subdir)
         did_something = True
     if not did_something:
         print("nothing to do - please specify a backup to do or -h/--help for help")
