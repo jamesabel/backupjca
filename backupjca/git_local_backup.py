@@ -7,10 +7,11 @@ from typing import Iterable
 
 import github3
 from git import Repo
-from git.exc import GitCommandError
+from git.exc import GitCommandError, InvalidGitRepositoryError
 import appdirs
 from pressenter2exit import PressEnter2ExitGUI
 from balsa import get_logger
+from sundry import rmdir
 
 from backupjca import __application_name__, __author__
 
@@ -61,16 +62,23 @@ def get_github_auth():
 
 
 def pull_branches(repo_name: str, branches: Iterable, repo_dir: str):
-    git_repo = Repo(repo_dir)
-    for branch in branches:
 
-        if not get_press_enter_to_exit().is_alive():
-            break
+    git_repo = None
+    try:
+        git_repo = Repo(repo_dir)
+    except InvalidGitRepositoryError as e:
+        log.error(f"InvalidGitRepositoryError: {repo_name} , {repo_dir} , {e}", stack_info=True, exc_info=True)
 
-        branch_name = branch.name
-        print_log(f'git pull "{repo_name}" branch:"{branch_name}" to {repo_dir}')
-        git_repo.git.checkout(branch_name)
-        git_repo.git.pull()
+    if git_repo is not None:
+        for branch in branches:
+
+            if not get_press_enter_to_exit().is_alive():
+                break
+
+            branch_name = branch.name
+            print_log(f'git pull "{repo_name}" branch:"{branch_name}" to {repo_dir}')
+            git_repo.git.checkout(branch_name)
+            git_repo.git.pull()
 
 
 def github_local_backup(backup_dir: str, github_subdir: str):
@@ -100,7 +108,7 @@ def github_local_backup(backup_dir: str, github_subdir: str):
         # new to us - clone the repo
         if not pull_success:
             if os.path.exists(repo_dir):
-                shutil.rmtree(repo_dir, ignore_errors=True)
+                rmdir(repo_dir)
 
             print_log(f'git clone "{repo_name}" to "{repo_dir}"')
 
