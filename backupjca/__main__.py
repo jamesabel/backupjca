@@ -1,4 +1,4 @@
-from sundry import is_main
+from ismain import is_main
 
 from ._backupjca import main
 

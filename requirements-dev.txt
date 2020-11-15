@@ -1,4 +1,4 @@
-sundry
+awsimple
 balsa
 pressenter2exit
 boto3
@@ -7,10 +7,8 @@ github3.py
 GitPython
 typeguard
 #
-# install from source for now
-# pyinstaller
-#
 black
 pytest
 coverage
 pytest-cov
+pyship

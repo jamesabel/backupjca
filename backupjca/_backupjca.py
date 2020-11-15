@@ -24,6 +24,7 @@ def main():
     parser.add_argument("-e", "--exclude", nargs="*", help="exclude these AWS S3 buckets and/or tables")
     parser.add_argument("-x", "--exclude_file", help="exclude the AWS S3 buckets and/or tables listed in this file")
     parser.add_argument("-p", "--profile", help="AWS profile (uses the default AWS profile if not given)")
+    parser.add_argument("-t", "--token", help="github token (only need to enter once - it will be stored for you)")
     parser.add_argument("--dry_run", action="store_true", default=False, help="Displays operations that would be performed using the specified command without actually running them")
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="set verbose")
     args = parser.parse_args()
@@ -38,10 +39,11 @@ def main():
     log.info(f"__author__={__author__}")
     log.info(f"__version__={__version__}")
 
-    if args.exclude is not None:
-        exclusion_list = args.exclude
-    else:
+    if args.exclude is None:
         exclusion_list = []
+    else:
+        exclusion_list = args.exclude.split()
+
     if args.exclude_file is not None:
         with open(args.exclude_file) as f:
             for file_line in f:

@@ -1,8 +1,9 @@
-import os
 import pickle
 import logging
+from datetime import timedelta
+from pathlib import Path
 
-from sundry import aws_dynamodb_scan_table, aws_get_dynamodb_table_names
+from awsimple import DynamoDBAccess
 
 from backupjca import __application_name__
 
@@ -11,18 +12,23 @@ log = logging.getLogger(__application_name__)
 
 def dynamodb_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bool, excludes: (list, None)):
 
-    tables = aws_get_dynamodb_table_names(aws_profile)
+    tables = DynamoDBAccess().get_table_names(aws_profile=aws_profile)
     print(f"backing up {len(tables)} DynamoDB tables")
     if dry_run:
         print("*** DRY RUN ***")
     for table_name in tables:
         print(table_name)
+
+        # awsimple will update immediately if number of table rows changes, but backup from scratch every so often to be safe
+        cache_life = timedelta(days=7).total_seconds()
+
         if excludes is not None and table_name in excludes:
             print(f"excluding {table_name}")
         else:
+            table = DynamoDBAccess(table_name, cache_life=cache_life)
+            table_contents = table.scan_table_cached(table_name, aws_profile)
             if not dry_run:
-                table_contents = aws_dynamodb_scan_table(table_name, aws_profile)
-                dir_path = os.path.join(backup_directory, "dynamodb")
-                os.makedirs(dir_path, exist_ok=True)
-                with open(os.path.join(dir_path, f"{table_name}.pickle"), "wb") as f:
+                dir_path = Path(backup_directory, "dynamodb")
+                dir_path.mkdir(parents=True, exist_ok=True)
+                with Path(dir_path, f"{table_name}.pickle").open("wb") as f:
                     pickle.dump(table_contents, f)
