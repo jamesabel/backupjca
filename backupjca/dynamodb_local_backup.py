@@ -12,7 +12,7 @@ log = logging.getLogger(__application_name__)
 
 def dynamodb_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bool, excludes: (list, None)):
 
-    tables = DynamoDBAccess().get_table_names(aws_profile=aws_profile)
+    tables = DynamoDBAccess(profile_name=aws_profile).get_table_names()
     print(f"backing up {len(tables)} DynamoDB tables")
     if dry_run:
         print("*** DRY RUN ***")
@@ -26,7 +26,7 @@ def dynamodb_local_backup(backup_directory: str, aws_profile: (str, None), dry_r
             print(f"excluding {table_name}")
         else:
             table = DynamoDBAccess(table_name, cache_life=cache_life)
-            table_contents = table.scan_table_cached(table_name, aws_profile)
+            table_contents = table.scan_table_cached()
             if not dry_run:
                 dir_path = Path(backup_directory, "dynamodb")
                 dir_path.mkdir(parents=True, exist_ok=True)

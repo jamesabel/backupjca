@@ -3,4 +3,4 @@ from .print_log import print_log
 from .s3_local_backup import s3_local_backup
 from .dynamodb_local_backup import dynamodb_local_backup
 from .git_local_backup import github_local_backup
-from ._backupjca import main
+from .main import main

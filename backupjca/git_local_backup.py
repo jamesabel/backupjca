@@ -48,7 +48,7 @@ def pull_branches(repo_name: str, branches: Iterable, repo_dir: str):
     try:
         git_repo = Repo(repo_dir)
     except InvalidGitRepositoryError as e:
-        log.error(f"InvalidGitRepositoryError: {repo_name} , {repo_dir} , {e}", stack_info=True, exc_info=True)
+        log.error(f"InvalidGitRepositoryError: {repo_name} , {repo_dir} , {e}")
 
     if git_repo is not None:
         for branch in branches:
@@ -88,10 +88,13 @@ def github_local_backup(backup_dir: str, github_subdir: str):
 
         # new to us - clone the repo
         if not pull_success:
-            if repo_dir.exists():
-                shutil.rmtree(repo_dir)
+            try:
+                if repo_dir.exists():
+                    shutil.rmtree(repo_dir)
 
-            print_log(f'git clone "{repo_name}" to "{repo_dir}"')
+                print_log(f'git clone "{repo_name}" to "{repo_dir}"')
 
-            Repo.clone_from(github_repo.clone_url, repo_dir)
-            pull_branches(repo_name, branches, repo_dir)
+                Repo.clone_from(github_repo.clone_url, repo_dir)
+                pull_branches(repo_name, branches, repo_dir)
+            except PermissionError as e:
+                log.warning(f"{repo_name} : {e}")
