@@ -207,3 +207,5 @@ temp/
 secrets/
 personal/
 LICENSE.txt
+*.nsi
+app/
