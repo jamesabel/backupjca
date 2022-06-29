@@ -1,14 +1,15 @@
-import boto3
 import subprocess
 import os
 import re
 from multiprocessing import freeze_support
+
 from typeguard import typechecked
 
+from awsimple import S3Access
 from balsa import get_logger
 from pressenter2exit import PressEnter2ExitGUI
 
-from backupjca import __application_name__, __version__
+from backupjca import __application_name__, __version__, print_log
 
 log = get_logger(__application_name__)
 
@@ -35,41 +36,28 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
 
     log.info(f"{__application_name__} : {__version__}")
 
-    if aws_profile is not None:
-        session = boto3.Session(profile_name=aws_profile)
-        s3_client = session.client("s3")
-    else:
-        s3_client = boto3.client("s3")
+    s3_access = S3Access(profile_name=aws_profile)
 
     decoding = "utf-8"
 
     # we delete all whitespace below
     ls_re = re.compile(r"TotalObjects:([0-9]+)TotalSize:([0-9]+)")
 
-    # todo: use pagination?
-    buckets = s3_client.list_buckets()["Buckets"]
-    s = f"found {len(buckets)} buckets"
-    log.info(s)
-    print(s)
+    buckets = s3_access.bucket_list()
+    print(f"backing up {len(buckets)} buckets")
 
     press_enter_to_exit = PressEnter2ExitGUI(title="S3 local backup")
 
-    for bucket in buckets:
+    for bucket_name in buckets:
 
         if not press_enter_to_exit.is_alive():
             break
 
         # do the sync
-        bucket_name = bucket["Name"]
-
         if excludes is not None and bucket_name in excludes:
-            s = f"excluding bucket : {bucket_name}"
-            log.info(s)
-            print(s)
+            print_log(f"excluding bucket : {bucket_name}")
         else:
-            s = f"bucket : {bucket_name}"
-            log.info(s)
-            print(s)
+            print_log(f"bucket : {bucket_name}")
 
             aws_cli_path = f'"{os.path.abspath(os.path.join("venv", "Scripts", "aws"))}"'
 

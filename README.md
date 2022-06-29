@@ -1,8 +1,4 @@
 backupjca
 =========
 
-locally backup S3 buckets
-
-locally backup github repos
-
-use robocopy to do a reliable backup
+Locally backup all S3 buckets, DyanamoDB Tables, and github repos.
