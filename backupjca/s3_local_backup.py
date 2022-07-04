@@ -48,6 +48,7 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
 
     press_enter_to_exit = PressEnter2ExitGUI(title="S3 local backup")
 
+    count = 0
     for bucket_name in buckets:
 
         if not press_enter_to_exit.is_alive():
@@ -86,6 +87,7 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
             ls_command_line_str = " ".join(ls_command_line)
             log.info(ls_command_line_str)
             ls_result = subprocess.run(ls_command_line_str, stdout=subprocess.PIPE, shell=True)
+            count += 1
             ls_stdout = "".join([c for c in ls_result.stdout.decode(decoding) if c not in " \r\n"])  # remove all whitespace
             ls_parsed = ls_re.search(ls_stdout)
             s3_object_count = int(ls_parsed.group(1))
@@ -105,3 +107,4 @@ def s3_local_backup(backup_directory: str, aws_profile: (str, None), dry_run: bo
                 error_routine = log.info
             if error_routine is not None:
                 error_routine(f"{bucket_name} : {message} (s3_count={s3_object_count}, local_count={local_count}; s3_total_size={s3_total_size}, local_size={local_size})")
+    print(f"backed up {count} buckets")

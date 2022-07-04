@@ -33,7 +33,7 @@ def main():
     if args.verbose:
         balsa.verbose = args.verbose
     balsa.log_directory = args.path
-    balsa.delete_existing_log_files = True
+    balsa.log_console_prefix = "\r"
     balsa.init_logger()
     log.info(f"__application_name__={__application_name__}")
     log.info(f"__author__={__author__}")
